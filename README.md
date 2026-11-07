@@ -1,6 +1,7 @@
 # Diffusion-Bridge Unfolding for MRI Reconstruction
 
-Kaiyuan (Sam) Kang · Computational Imaging Group, Washington University in St. Louis · Summer 2025
+Sam Kang · Computational Imaging Group, Washington University in St. Louis · Summer 2025
+Advised by Professor Ulugbek Kamilov
 
 ## Abstract
 

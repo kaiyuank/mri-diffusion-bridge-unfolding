@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diffusion-Bridge Unfolding for MRI Reconstruction | Sam Kang</title>
+<meta name="description" content="A research project by Sam Kang on MRI reconstruction with diffusion-bridge priors and deep unfolding.">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f8faf9; --paper: #fff; --ink: #122321; --muted: #4b615d;
+  --green: #08715d; --accent: #d9eee7; --line: #d9e4df; --math: #f2f7f5;
+  --width: 1120px;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.65 system-ui, sans-serif; }
+a { color: var(--green); text-underline-offset: .19em; }
+a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--green); outline-offset: 4px; }
+.wrap { max-width: var(--width); width: calc(100% - 64px); margin-inline: auto; }
+.top { border-bottom: 1px solid var(--line); }
+.top .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .65rem 2rem; min-height: 66px; padding-block: .7rem; }
+.wordmark { display: inline-flex; align-items: center; gap: .6rem; color: var(--ink); font-size: .89rem; font-weight: 720; text-decoration: none; }
+.mark { width: .68rem; height: .68rem; border: 2px solid var(--green); border-radius: 50%; background: var(--accent); }
+nav { display: flex; flex-wrap: wrap; gap: .3rem 1.4rem; font-size: .88rem; }
+nav a { color: var(--muted); text-decoration: none; }
+nav a:hover { text-decoration: underline; color: var(--green); }
+.hero { padding-block: clamp(2.7rem, 6.7vw, 5.7rem) clamp(2.7rem, 5.5vw, 4.8rem); display: grid; grid-template-columns: 1.04fr 1fr; gap: clamp(2rem, 5.2vw, 4.5rem); align-items: center; }
+.eyebrow, .section-tag { color: var(--green); text-transform: uppercase; font-weight: 760; letter-spacing: .13em; font-size: .73rem; }
+h1, h2 { font-family: Georgia, "Times New Roman", serif; font-weight: 500; }
+h1 { margin: .55rem 0 1.15rem; font-size: clamp(2.75rem, 5.2vw, 4.6rem); line-height: .99; letter-spacing: -.055em; }
+.lede { max-width: 41ch; color: var(--muted); font-size: clamp(1.02rem, 1.35vw, 1.16rem); margin: 0 0 1.45rem; }
+.author { font-size: .94rem; margin: 0; font-weight: 720; }
+.affiliation { color: var(--muted); font-size: .86rem; margin: .13rem 0 0; }
+.result { margin: 0; background: var(--paper); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; min-width: 0; box-shadow: 0 12px 28px #143d2d0c; }
+.result-head { display: flex; justify-content: space-between; align-items: center; gap: .55rem; flex-wrap: wrap; padding: .9rem 1.05rem; }
+.result-head strong { font-size: .95rem; }
+.badge { padding: .22rem .55rem; background: var(--accent); color: #075744; border-radius: 5px; font-size: .7rem; font-weight: 690; }
+.result img { display: block; width: 100%; height: auto; background: #000; }
+figcaption { padding: .67rem 1.05rem; color: var(--muted); font-size: .8rem; }
+.metrics { display: grid; grid-template-columns: 1.2fr 1fr 1fr; margin: 0; border-top: 1px solid var(--line); }
+.metrics div { padding: .72rem .75rem .8rem; min-width: 0; text-align: center; }
+.metrics div + div { border-left: 1px solid var(--line); }
+.metrics dt { font-size: .72rem; font-weight: 720; color: var(--muted); letter-spacing: .07em; }
+.metrics dd { margin: 0; font-weight: 720; font-variant-numeric: tabular-nums; font-size: clamp(.94rem, 1.7vw, 1.34rem); }
+.metrics small { font-size: .68em; font-weight: 600; }
+.report { background: var(--paper); border-block: 1px solid var(--line); }
+.article { width: min(100% - 64px, 760px); margin-inline: auto; padding-block: .2rem 3.5rem; }
+section { scroll-margin-top: 1.25rem; }
+.article section { padding-top: 2.6rem; }
+.article section + section { border-top: 1px solid var(--line); margin-top: 2.5rem; }
+h2 { line-height: 1.06; letter-spacing: -.035em; font-size: clamp(2rem, 4vw, 2.8rem); margin: .22rem 0 1rem; }
+h3 { font-size: 1.05rem; margin: 1.65rem 0 .4rem; }
+p { margin: .68rem 0; }
+.equation { background: var(--math); border: 1px solid var(--line); border-radius: 8px; margin: 1rem 0; padding: .9rem 1.1rem; overflow-x: auto; min-width: 0; }
+.equation .katex { display: block; width: max-content; min-width: 100%; }
+math { font-size: 1em; }
+.equation math { margin-inline: auto; }
+li + li { margin-top: .36rem; }
+li::marker { color: var(--green); font-weight: 720; }
+footer { color: var(--muted); padding: 1.7rem 0; font-size: .82rem; }
+@media (max-width: 760px) {
+  .wrap, .article { width: calc(100% - 36px); }
+  .hero { grid-template-columns: minmax(0, 1fr); align-items: start; }
+  h1 { max-width: 16ch; }
+  .result { max-width: 545px; }
+  .equation { padding-inline: .65rem; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+</head>
+<body id="top">
+<header class="top">
+  <div class="wrap">
+    <a class="wordmark" href="#top"><span class="mark" aria-hidden="true"></span> Sam Kang · Research</a>
+    <nav aria-label="Project sections">
+      <a href="#abstract">Abstract</a>
+      <a href="#background">Background</a>
+      <a href="#derivation">Derivation</a>
+      <a href="#results">Results</a>
+    </nav>
+  </div>
+</header>
+<main>
+  <div class="hero wrap">
+    <div>
+      <div class="eyebrow">Research Project · Summer 2025</div>
+      <h1>Diffusion-Bridge Unfolding for MRI Reconstruction</h1>
+      <p class="lede">Recovering MRI images from undersampled k-space using diffusion-bridge priors and model-based consistency updates.</p>
+      <p class="author">Sam Kang</p>
+      <p class="affiliation">Advised by Professor Ulugbek Kamilov</p>
+      <p class="affiliation">Computational Imaging Group · Washington University in St. Louis</p>
+    </div>
+    <figure class="result" id="results">
+      <div class="result-head">
+        <strong>Reconstruction result</strong>
+        <span class="badge">One recorded example</span>
+      </div>
+      <img src="figures/reconstruction.png" width="495" height="226" alt="Three rows of sagittal brain MRI slices. The reference is on top, the degraded initializer in the middle, and the reconstruction on the bottom.">
+      <figcaption>From top to bottom, the rows show the reference, degraded initializer, and reconstruction.</figcaption>
+      <dl class="metrics" aria-label="Metrics for the recorded reconstruction example">
+        <div><dt>PSNR</dt><dd>33.0364 <small>dB</small></dd></div>
+        <div><dt>SSIM</dt><dd>0.9365</dd></div>
+        <div><dt>LPIPS</dt><dd>0.0111</dd></div>
+      </dl>
+    </figure>
+  </div>
+  <div class="report">
+    <article class="article" aria-label="Project report">
+      <section id="abstract">
+        <div class="section-tag">01 · Project overview</div>
+        <h2>Abstract</h2>
+        <p>This project combines an image-to-image diffusion bridge with deep unfolding for MRI reconstruction. Starting from an image formed from undersampled k-space, the bridge provides a learned prior for recovering the clean image. A time-dependent operator derived from the bridge mean provides a consistency update in image space. Experiments compared this approach with unfolding using the MRI forward operator and with a standalone diffusion bridge.</p>
+      </section>
+      <section id="background">
+        <div class="section-tag">02 · Acquisition model</div>
+        <h2>Background</h2>
+        <p>An undersampled MRI acquisition can be modeled as</p>
+<div class="equation" tabindex="0" aria-label="Equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>y</mi><mo>=</mo><mi>A</mi><msub><mi>x</mi><mn>0</mn></msub><mo>+</mo><mi>e</mi><mo separator="true">,</mo><mspace width="2em"/><mi>A</mi><mo>=</mo><mi>P</mi><mi>F</mi><mi>S</mi><mo separator="true">,</mo><mspace width="2em"/><msub><mi>x</mi><mn>1</mn></msub><mo>=</mo><msup><mi>A</mi><mo>†</mo></msup><mi>y</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">y = A x_0 + e, \qquad A = PFS, \qquad x_1 = A^\dagger y.</annotation></semantics></math></span></div>
+<p>Here, <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">x_0</annotation></semantics></math></span> is the reference image, <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>y</mi></mrow><annotation encoding="application/x-tex">y</annotation></semantics></math></span> is the acquired k-space, and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>e</mi></mrow><annotation encoding="application/x-tex">e</annotation></semantics></math></span> is measurement noise. The operator <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi></mrow><annotation encoding="application/x-tex">S</annotation></semantics></math></span> applies coil sensitivities, <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>F</mi></mrow><annotation encoding="application/x-tex">F</annotation></semantics></math></span> is the Fourier transform, and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi></mrow><annotation encoding="application/x-tex">P</annotation></semantics></math></span> selects acquired samples. The fixed linear map <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>A</mi><mo>†</mo></msup></mrow><annotation encoding="application/x-tex">A^\dagger</annotation></semantics></math></span> forms the degraded image initializer <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">x_1</annotation></semantics></math></span>. The notation <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>A</mi><mi mathvariant="normal">H</mi></msup></mrow><annotation encoding="application/x-tex">A^{\mathrm H}</annotation></semantics></math></span> denotes the Hermitian adjoint.</p>
+<p>Deep unfolding alternates a consistency step from the acquisition model with a learned image update. An image-to-image diffusion bridge learns a restoration process between the degraded and clean endpoints. This project uses the bridge as a learned prior and adds an explicit consistency step to guide the reconstruction. The bridge formulation follows <a href="https://proceedings.mlr.press/v202/liu23ai.html">I²SB by Liu et al. (ICML 2023)</a>.</p>
+      </section>
+      <section id="derivation">
+        <div class="section-tag">03 · Reconstruction method</div>
+        <h2>Derivation</h2>
+        <h3>Unfolding with the MRI forward operator</h3>
+<p>The conventional data fidelity term measures disagreement with acquired k-space. Initialize <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mover accent="true"><mi>x</mi><mo>^</mo></mover><mn>0</mn></msub><mo>=</mo><msub><mi>x</mi><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">\hat{x}_0=x_1</annotation></semantics></math></span> and define</p>
+<div class="equation" tabindex="0" aria-label="Equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>L</mi><mi>A</mi></msub><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo>=</mo><mstyle displaystyle="false" scriptlevel="0"><mfrac><mn>1</mn><mn>2</mn></mfrac></mstyle><mo stretchy="false">∥</mo><mi>A</mi><mi>x</mi><mo>−</mo><mi>y</mi><msubsup><mo stretchy="false">∥</mo><mn>2</mn><mn>2</mn></msubsup><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">L_A(x)=\tfrac12\lVert Ax-y\rVert_2^2.</annotation></semantics></math></span></div>
+<p>At unfolding step <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi></mrow><annotation encoding="application/x-tex">k</annotation></semantics></math></span>, a gradient step is followed by a learned image update.</p>
+<div class="equation" tabindex="0" aria-label="Equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><msub><mi>z</mi><mi>k</mi></msub></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><msub><mover accent="true"><mi>x</mi><mo>^</mo></mover><mi>k</mi></msub><mo>−</mo><msub><mi>γ</mi><mi>k</mi></msub><msup><mi>A</mi><mi mathvariant="normal">H</mi></msup><mo stretchy="false">(</mo><mi>A</mi><msub><mover accent="true"><mi>x</mi><mo>^</mo></mover><mi>k</mi></msub><mo>−</mo><mi>y</mi><mo stretchy="false">)</mo><mo separator="true">,</mo></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><msub><mover accent="true"><mi>x</mi><mo>^</mo></mover><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><msub><mi>λ</mi><mi>k</mi></msub><msub><mi>D</mi><mi>θ</mi></msub><mo stretchy="false">(</mo><msub><mi>z</mi><mi>k</mi></msub><mo separator="true">,</mo><mi>t</mi><mo stretchy="false">)</mo><mo>+</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><msub><mi>λ</mi><mi>k</mi></msub><mo stretchy="false">)</mo><msub><mi>z</mi><mi>k</mi></msub><mi mathvariant="normal">.</mi></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{aligned}
+z_k &amp;= \hat{x}_k-\gamma_k A^{\mathrm H}(A\hat{x}_k-y),\\
+\hat{x}_{k+1} &amp;= \lambda_k D_\theta(z_k,t)+(1-\lambda_k)z_k.
+\end{aligned}</annotation></semantics></math></span></div>
+<p>Here, <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>γ</mi><mi>k</mi></msub></mrow><annotation encoding="application/x-tex">\gamma_k</annotation></semantics></math></span> is the gradient step size, <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>λ</mi><mi>k</mi></msub></mrow><annotation encoding="application/x-tex">\lambda_k</annotation></semantics></math></span> controls the blend, and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>D</mi><mi>θ</mi></msub><mo stretchy="false">(</mo><mo>⋅</mo><mo separator="true">,</mo><mi>t</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">D_\theta(\cdot,t)</annotation></semantics></math></span> is the learned image map conditioned on diffusion time <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi></mrow><annotation encoding="application/x-tex">t</annotation></semantics></math></span>.</p>
+<h3>Unfolding with the bridge operator</h3>
+<p>The bridge mean at time <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi></mrow><annotation encoding="application/x-tex">t</annotation></semantics></math></span> is a weighted average of the clean and degraded endpoints.</p>
+<div class="equation" tabindex="0" aria-label="Equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>s</mi><mi>t</mi></msub><mo>=</mo><msub><mi>α</mi><mi>t</mi></msub><msub><mi>x</mi><mn>0</mn></msub><mo>+</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><msub><mi>α</mi><mi>t</mi></msub><mo stretchy="false">)</mo><msub><mi>x</mi><mn>1</mn></msub><mo separator="true">,</mo><mspace width="2em"/><msub><mi>α</mi><mi>t</mi></msub><mo>∈</mo><mo stretchy="false">[</mo><mn>0</mn><mo separator="true">,</mo><mn>1</mn><mo stretchy="false">]</mo><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">s_t = \alpha_t x_0+(1-\alpha_t)x_1, \qquad \alpha_t\in[0,1].</annotation></semantics></math></span></div>
+<p>Substituting <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mn>1</mn></msub><mo>=</mo><msup><mi>A</mi><mo>†</mo></msup><mo stretchy="false">(</mo><mi>A</mi><msub><mi>x</mi><mn>0</mn></msub><mo>+</mo><mi>e</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">x_1=A^\dagger(Ax_0+e)</annotation></semantics></math></span> gives an effective forward model for the bridge mean.</p>
+<div class="equation" tabindex="0" aria-label="Equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><msub><mi>s</mi><mi>t</mi></msub></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><msub><mi>α</mi><mi>t</mi></msub><msub><mi>x</mi><mn>0</mn></msub><mo>+</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><msub><mi>α</mi><mi>t</mi></msub><mo stretchy="false">)</mo><msup><mi>A</mi><mo>†</mo></msup><mo stretchy="false">(</mo><mi>A</mi><msub><mi>x</mi><mn>0</mn></msub><mo>+</mo><mi>e</mi><mo stretchy="false">)</mo></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mo fence="false" stretchy="true" minsize="1.2em" maxsize="1.2em">[</mo><msub><mi>α</mi><mi>t</mi></msub><mi>I</mi><mo>+</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><msub><mi>α</mi><mi>t</mi></msub><mo stretchy="false">)</mo><msup><mi>A</mi><mo>†</mo></msup><mi>A</mi><mo fence="false" stretchy="true" minsize="1.2em" maxsize="1.2em">]</mo><msub><mi>x</mi><mn>0</mn></msub><mo>+</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><msub><mi>α</mi><mi>t</mi></msub><mo stretchy="false">)</mo><msup><mi>A</mi><mo>†</mo></msup><mi>e</mi></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><msub><mi>H</mi><mi>t</mi></msub><msub><mi>x</mi><mn>0</mn></msub><mo>+</mo><msub><mi>w</mi><mi>t</mi></msub><mo separator="true">,</mo></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{aligned}
+s_t &amp;= \alpha_t x_0+(1-\alpha_t)A^\dagger(Ax_0+e)\\
+    &amp;= \big[\alpha_t I+(1-\alpha_t)A^\dagger A\big]x_0
+       +(1-\alpha_t)A^\dagger e\\
+    &amp;= H_t x_0+w_t,
+\end{aligned}</annotation></semantics></math></span></div>
+<p>where <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>H</mi><mi>t</mi></msub><mo>=</mo><msub><mi>α</mi><mi>t</mi></msub><mi>I</mi><mo>+</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><msub><mi>α</mi><mi>t</mi></msub><mo stretchy="false">)</mo><msup><mi>A</mi><mo>†</mo></msup><mi>A</mi></mrow><annotation encoding="application/x-tex">H_t=\alpha_t I+(1-\alpha_t)A^\dagger A</annotation></semantics></math></span> and <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>w</mi><mi>t</mi></msub><mo>=</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><msub><mi>α</mi><mi>t</mi></msub><mo stretchy="false">)</mo><msup><mi>A</mi><mo>†</mo></msup><mi>e</mi></mrow><annotation encoding="application/x-tex">w_t=(1-\alpha_t)A^\dagger e</annotation></semantics></math></span>. The term <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>w</mi><mi>t</mi></msub></mrow><annotation encoding="application/x-tex">w_t</annotation></semantics></math></span> comes from the original measurement noise. The derivation describes the bridge mean, while a sampled bridge state also contains diffusion noise.</p>
+<p>At fixed <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi></mrow><annotation encoding="application/x-tex">t</annotation></semantics></math></span>, let <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mover accent="true"><mi>s</mi><mo>^</mo></mover><mi>t</mi></msub></mrow><annotation encoding="application/x-tex">\hat{s}_t</annotation></semantics></math></span> be the estimate of the bridge mean used in the unfolding stage. The bridge consistency term and updates are</p>
+<div class="equation" tabindex="0" aria-label="Equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>L</mi><mrow><mi>H</mi><mo separator="true">,</mo><mi>t</mi></mrow></msub><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo>=</mo><mstyle displaystyle="false" scriptlevel="0"><mfrac><mn>1</mn><mn>2</mn></mfrac></mstyle><mo stretchy="false">∥</mo><msub><mi>H</mi><mi>t</mi></msub><mi>x</mi><mo>−</mo><msub><mover accent="true"><mi>s</mi><mo>^</mo></mover><mi>t</mi></msub><msubsup><mo stretchy="false">∥</mo><mn>2</mn><mn>2</mn></msubsup><mo separator="true">,</mo></mrow><annotation encoding="application/x-tex">L_{H,t}(x)=\tfrac12\lVert H_t x-\hat{s}_t\rVert_2^2,</annotation></semantics></math></span></div>
+<div class="equation" tabindex="0" aria-label="Equation"><span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><msub><mi>z</mi><mi>k</mi></msub></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><msub><mover accent="true"><mi>x</mi><mo>^</mo></mover><mi>k</mi></msub><mo>−</mo><msub><mi>γ</mi><mi>k</mi></msub><msubsup><mi>H</mi><mi>t</mi><mi mathvariant="normal">H</mi></msubsup><mo stretchy="false">(</mo><msub><mi>H</mi><mi>t</mi></msub><msub><mover accent="true"><mi>x</mi><mo>^</mo></mover><mi>k</mi></msub><mo>−</mo><msub><mover accent="true"><mi>s</mi><mo>^</mo></mover><mi>t</mi></msub><mo stretchy="false">)</mo><mo separator="true">,</mo></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><msub><mover accent="true"><mi>x</mi><mo>^</mo></mover><mrow><mi>k</mi><mo>+</mo><mn>1</mn></mrow></msub></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><msub><mi>λ</mi><mi>k</mi></msub><msub><mi>D</mi><mi>θ</mi></msub><mo stretchy="false">(</mo><msub><mi>z</mi><mi>k</mi></msub><mo separator="true">,</mo><mi>t</mi><mo stretchy="false">)</mo><mo>+</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><msub><mi>λ</mi><mi>k</mi></msub><mo stretchy="false">)</mo><msub><mi>z</mi><mi>k</mi></msub><mi mathvariant="normal">.</mi></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{aligned}
+z_k &amp;= \hat{x}_k-\gamma_k H_t^{\mathrm H}(H_t\hat{x}_k-\hat{s}_t),\\
+\hat{x}_{k+1} &amp;= \lambda_k D_\theta(z_k,t)+(1-\lambda_k)z_k.
+\end{aligned}</annotation></semantics></math></span></div>
+<p>The <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi></mrow><annotation encoding="application/x-tex">A</annotation></semantics></math></span>-based update matches acquired k-space. The <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>H</mi><mi>t</mi></msub></mrow><annotation encoding="application/x-tex">H_t</annotation></semantics></math></span>-based update matches an estimated bridge mean in image space.</p>
+      </section>
+      <section id="experiments">
+        <div class="section-tag">04 · Evaluation</div>
+        <h2>Experiments</h2>
+        <p>Experiments varied the number of unfolding steps and compared three approaches.</p>
+<ol><li>Standalone diffusion-bridge reconstruction.</li><li>Deep unfolding with the MRI forward operator <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi></mrow><annotation encoding="application/x-tex">A</annotation></semantics></math></span>.</li><li>Deep unfolding with the bridge operator <span class="katex"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>H</mi><mi>t</mi></msub></mrow><annotation encoding="application/x-tex">H_t</annotation></semantics></math></span>.</li></ol>
+        <p>See the <a href="#results">recorded reconstruction example</a> for the montage and metrics.</p>
+      </section>
+    </article>
+  </div>
+</main>
+<footer class="wrap">Sam Kang · Computational Imaging Group · Summer 2025</footer>
+</body>
+</html>
